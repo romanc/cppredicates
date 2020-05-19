@@ -34,3 +34,10 @@
 # build folder
 build/
 
+# documentation folder
+docs/
+
+# ide project files and folders
+*.sublime-project
+*.sublime-workspace
+

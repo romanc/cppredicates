@@ -1,0 +1,6 @@
+# Use defaults from the Google style
+BasedOnStyle: Google
+IndentWidth: 4
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterNamespace: true
