@@ -2,6 +2,7 @@
 #define CPPREDICATES_RAY_2D_T_H
 
 #include <cppredicates/Point2D_T.hpp>
+#include <utility>
 
 namespace cppredicates
 {
@@ -12,13 +13,13 @@ class Ray2D_T {
     //! Default constructor
     Ray2D_T() = default;
 
-    /** Construct a ray starting at \c origin_, going through \c through_
+    /** Construct a ray starting at \c origin, going through \c through
      *
      *  @param origin_  Start of this ray
      *  @param through_ This ray goes through this point
      */
-    explicit Ray2D_T(const Point2D_T<T>& origin_, const Point2D_T<T>& through_)
-        : origin(origin_), through(through_) {}
+    explicit Ray2D_T(Point2D_T<T> origin, Point2D_T<T> through)
+        : m_origin(std::move(origin)), m_through(std::move(through)) {}
 
     /** Default move constructor
      *
@@ -32,9 +33,12 @@ class Ray2D_T {
      */
     Ray2D_T<T>& operator=(Ray2D_T<T>&& r) = default;
 
+    const Point2D_T<T>& origin() const { return m_origin; }
+    const Point2D_T<T>& through() const { return m_through; }
+
    private:
-    Point2D_T<T> origin;
-    Point2D_T<T> through;
+    Point2D_T<T> m_origin;
+    Point2D_T<T> m_through;
 };
 
 // Template implementation

@@ -1,25 +1,29 @@
 #ifndef CPPREDICATES_CPPREDICATES_H
 #define CPPREDICATES_CPPREDICATES_H
 
+#include <cppredicates/Circle2D.hpp>
+#include <cppredicates/Plane3D.hpp>
+#include <cppredicates/Point2D.hpp>
+#include <cppredicates/Point3D.hpp>
+#include <cppredicates/Ray2D.hpp>
+#include <cppredicates/Sphere.hpp>
+#include <cstdint>
+
 //! Project namespace
 namespace cppredicates
 {
-// Forward declarations
-class Circle;
-class Point2D;
-class Point3D;
-class Ray;
-class Sphere;
-
 //! Describes orientation of points with respect to geometric primitives.
-enum class Orientation : int16_t {
-    left = 0x0,      //!< Point is to the left of the ray
-    right = 0x1,     //!< Point is to the right of the ray
-    colinear = 0x4,  //!< Point is coliniear with the ray
-    coplanar = 0x5,  //!< Point is coplanar with the plane
-    inside = 0x2,    //!< Point is inside the circle/sphere
-    outside = 0x3,   //!< Point is outside the circle/sphere
-    boundary = 0x6   //!< Point is on the boundary of the circle/sphere
+enum class Orientation : int {
+    left = 1,     //!< Point is to the left of the ray
+    right = -1,   //!< Point is to the right of the ray
+    colinear = 0  //!< Point is coliniear with the ray
+    // coplanar = 0x5,  //!< Point is coplanar with the plane
+};
+
+enum class Orientation2 : int {
+    inside = 1,    //!< Point is inside the circle/sphere
+    outside = -1,  //!< Point is outside the circle/sphere
+    boundary = 0   //!< Point is on the boundary of the circle/sphere
 };
 
 //! CPPredicates provides robust geometric orientation primitives in modern C++
@@ -36,7 +40,17 @@ class CPPredicates {
      *  @returns One of \c Orientation::left, \c Orientation::right or \c
      * Orientation::colinear
      */
-    Orientation orientation(const Point2D& point, const Ray2D& ray);
+    real orientation(const Point2D& point, const Ray2D& ray);
+
+    /** Checks the orienation of a point in 2D with respect to a given ray
+     *
+     *  @param point 2D-Point to examine
+     *  @param ray Ray in 2D
+     *
+     *  @returns One of \c Orientation::left, \c Orientation::right or \c
+     * Orientation::colinear
+     */
+    real orientationApprox(const Point2D& point, const Ray2D& ray);
 
     /** Checks the orienation of a point in 3D with respect to a given plane
      *
@@ -55,7 +69,7 @@ class CPPredicates {
      *
      *  @returns One of \c Orientation::inside or \c Orientation::outside
      */
-    Orientation inCircle(const Point2D& point, const Circle2D& circle);
+    Orientation2 inCircle(const Point2D& point, const Circle2D& circle);
 
     /** Check whether a point in 3D is inside or outside a given sphere
      *
@@ -64,12 +78,28 @@ class CPPredicates {
      *
      *  @returns One of \c Orientation::inside or \c Orientation::outside
      */
-    Orientation inSphere(const Point3D& point, const Sphere& sphere);
+    Orientation2 inSphere(const Point3D& point, const Sphere& sphere);
 
    private:
+    real adaptiveOrient2D(const Point2D& point, const Ray2D& ray, real detsum) {
+        throw "Not yet implemented";
+    }
+
     real m_epsilon;   //!< Machine epsilon
     real m_splitter;  //!< ...
-                      // ...
+    real m_resulterrbound;
+    real m_ccwerrboundA;
+    real m_ccwerrboundB;
+    real m_ccwerrboundC;
+    real m_o3derrboundA;
+    real m_o3derrboundB;
+    real m_o3derrboundC;
+    real m_iccerrboundA;
+    real m_iccerrboundB;
+    real m_iccerrboundC;
+    real m_isperrboundA;
+    real m_isperrboundB;
+    real m_isperrboundC;
 };
 }  // namespace cppredicates
 

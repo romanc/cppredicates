@@ -15,3 +15,10 @@ add_executable(SupportTests
 )
 target_link_libraries(SupportTests PRIVATE libcppredicates)
 add_test(NAME SupportTests COMMAND SupportTests)
+
+add_executable(CppredicatesTests
+	main.cpp
+	cppredicates.cpp
+)
+target_link_libraries(CppredicatesTests PRIVATE libcppredicates)
+add_test(NAME CppredicatesTests COMMAND CppredicatesTests)

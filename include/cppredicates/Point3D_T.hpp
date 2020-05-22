@@ -8,15 +8,15 @@ template <class T>
 class Point3D_T {
    public:
     //! Default constructor
-    Point3D_T<T>() : x(T(0)), y(T(0)), z(T(0)) {}
+    Point3D_T<T>() : m_x(T(0)), m_y(T(0)), m_z(T(0)) {}
 
-    /*! Constructor from \c x_ and \c y_
+    /*! Constructor from \c x and \c y
      *
-     *  @param x_ x-coordinate
-     *  @param y_ y-coordinate
-     *  @param z_ z-coordinate
+     *  @param x x-coordinate
+     *  @param y y-coordinate
+     *  @param z z-coordinate
      */
-    explicit Point3D_T<T>(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
+    explicit Point3D_T<T>(T x, T y, T z) : m_x(x), m_y(y), m_z(z) {}
 
     /** Default move constructor
      *
@@ -31,9 +31,9 @@ class Point3D_T {
     Point3D_T& operator=(Point3D_T&& p) = default;
 
    private:
-    T x;
-    T y;
-    T z;
+    T m_x;
+    T m_y;
+    T m_z;
 };
 
 // Template implementation

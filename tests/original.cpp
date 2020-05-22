@@ -24,6 +24,14 @@ TEST_CASE("Original benchmarks", "[predicates]") {
     CHECK(left > 0);
     CHECK(right < 0);
     CHECK(middle == 0);
+}
+
+TEST_CASE("Original benchmark orient2d left", "[predicates]") {
+    exactinit();
+
+    Point pa = {0, 0};
+    Point pb = {2, 0};
+    Point pc = {1, 1};
 
     BENCHMARK("orient2d left") {
         return orient2d(pa.data(), pb.data(), pc.data());
@@ -32,6 +40,14 @@ TEST_CASE("Original benchmarks", "[predicates]") {
     BENCHMARK("orient2d fast (left)") {
         return orient2dfast(pa.data(), pb.data(), pc.data());
     };
+}
+
+TEST_CASE("Original benchmark orient2d right", "[predicates]") {
+    exactinit();
+
+    Point pa = {0, 0};
+    Point pb = {2, 0};
+    Point pd = {1, -1};
 
     BENCHMARK("orient2d right") {
         return orient2d(pa.data(), pb.data(), pd.data());
@@ -40,20 +56,30 @@ TEST_CASE("Original benchmarks", "[predicates]") {
     BENCHMARK("orient2d fast (right)") {
         return orient2dfast(pa.data(), pb.data(), pd.data());
     };
+}
+
+TEST_CASE("Original benchmark orient2d colinear", "[predicates]") {
+    exactinit();
+
+    Point pa = {0, 0};
+    Point pb = {2, 0};
+    Point pe = {1, 0};
 
     BENCHMARK("orient2d colinear") {
-        return orient2d(pa.data(), pb.data(), pd.data());
+        return orient2d(pa.data(), pb.data(), pe.data());
     };
 
     BENCHMARK("orient2d fast (colinear)") {
         return orient2dfast(pa.data(), pb.data(), pe.data());
     };
-
-    BENCHMARK("orient2d left (harder)") {
-        return orient2d(pa.data(), pb.data(), pf.data());
-    };
-
-    BENCHMARK("orient2d right (harder)") {
-        return orient2d(pa.data(), pb.data(), pg.data());
-    };
 }
+
+/*
+BENCHMARK("orient2d left (harder)") {
+    return orient2d(pa.data(), pb.data(), pf.data());
+};
+
+BENCHMARK("orient2d right (harder)") {
+    return orient2d(pa.data(), pb.data(), pg.data());
+};
+*/
