@@ -13,20 +13,26 @@ target_include_directories(libcppredicates SYSTEM INTERFACE $<INSTALL_INTERFACE:
 
 target_sources(libcppredicates INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Circle2D.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Circle2D_T.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/cppredicates.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Plane3D.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Plane3D_T.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point2D.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point2D_T.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point3D.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point3D_T.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Ray2D.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Ray2D_T.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Sphere.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Sphere_T.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/typedefs.hpp
 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Circle2D.tpp
-	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Plane3D.tpp
-	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point2D.tpp
-	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point3D.tpp
-	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Ray2D.tpp
-	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Sphere.tpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Circle2D_T.tpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Plane3D_T.tpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point2D_T.tpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Point3D_T.tpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Ray2D_T.tpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/cppredicates/Sphere_T.tpp
 )
 
 add_subdirectory(original)
