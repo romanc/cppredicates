@@ -1,6 +1,8 @@
 #ifndef CPPREDICATES_POINT_3D_T_H
 #define CPPREDICATES_POINT_3D_T_H
 
+#include <array>
+
 namespace cppredicates
 {
 //! Represents a point in three dimensions
@@ -8,7 +10,7 @@ template <class T>
 class Point3D_T {
    public:
     //! Default constructor
-    Point3D_T<T>() : m_x(T(0)), m_y(T(0)), m_z(T(0)) {}
+    Point3D_T<T>() : m_xyz({0, 0, 0}) {}
 
     /*! Constructor from \c x and \c y
      *
@@ -16,7 +18,7 @@ class Point3D_T {
      *  @param y y-coordinate
      *  @param z z-coordinate
      */
-    explicit Point3D_T<T>(T x, T y, T z) : m_x(x), m_y(y), m_z(z) {}
+    explicit Point3D_T<T>(T x, T y, T z) : m_xyz({x, y, z}) {}
 
     /** Default move constructor
      *
@@ -31,9 +33,7 @@ class Point3D_T {
     Point3D_T& operator=(Point3D_T&& p) = default;
 
    private:
-    T m_x;
-    T m_y;
-    T m_z;
+    std::array<T, 3> m_xyz;
 };
 
 // Template implementation

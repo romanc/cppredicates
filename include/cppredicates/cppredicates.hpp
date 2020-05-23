@@ -12,7 +12,7 @@
 //! Project namespace
 namespace cppredicates
 {
-//! Describes orientation of points with respect to geometric primitives.
+//! Describes orientation of points with respect to rays and planes
 enum class Orientation : int {
     left = 1,     //!< Point is to the left of the ray
     right = -1,   //!< Point is to the right of the ray
@@ -20,6 +20,7 @@ enum class Orientation : int {
     // coplanar = 0x5,  //!< Point is coplanar with the plane
 };
 
+//! In-circle and in-sphere test result enum
 enum class Orientation2 : int {
     inside = 1,    //!< Point is inside the circle/sphere
     outside = -1,  //!< Point is outside the circle/sphere
@@ -81,25 +82,26 @@ class CPPredicates {
     Orientation2 inSphere(const Point3D& point, const Sphere& sphere);
 
    private:
-    real adaptiveOrient2D(const Point2D& point, const Ray2D& ray, real detsum) {
-        throw "Not yet implemented";
-    }
+    real adaptiveOrient2D(const Point2D& point, const Ray2D& ray, real detsum);
 
-    real m_epsilon;   //!< Machine epsilon
-    real m_splitter;  //!< ...
-    real m_resulterrbound;
-    real m_ccwerrboundA;
-    real m_ccwerrboundB;
-    real m_ccwerrboundC;
-    real m_o3derrboundA;
-    real m_o3derrboundB;
-    real m_o3derrboundC;
-    real m_iccerrboundA;
-    real m_iccerrboundB;
-    real m_iccerrboundC;
-    real m_isperrboundA;
-    real m_isperrboundB;
-    real m_isperrboundC;
+   public:
+    static const real m_epsilon;   //!< Machine epsilon
+    static const real m_splitter;  //!< ...
+
+   private:
+    static const real m_resulterrbound;
+    static const real m_ccwerrboundA;
+    static const real m_ccwerrboundB;
+    static const real m_ccwerrboundC;
+    static const real m_o3derrboundA;
+    static const real m_o3derrboundB;
+    static const real m_o3derrboundC;
+    static const real m_iccerrboundA;
+    static const real m_iccerrboundB;
+    static const real m_iccerrboundC;
+    static const real m_isperrboundA;
+    static const real m_isperrboundB;
+    static const real m_isperrboundC;
 };
 }  // namespace cppredicates
 

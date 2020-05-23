@@ -15,8 +15,8 @@ class Ray2D_T {
 
     /** Construct a ray starting at \c origin, going through \c through
      *
-     *  @param origin_  Start of this ray
-     *  @param through_ This ray goes through this point
+     *  @param origin  Start of this ray
+     *  @param through This ray goes through this point
      */
     explicit Ray2D_T(Point2D_T<T> origin, Point2D_T<T> through)
         : m_origin(std::move(origin)), m_through(std::move(through)) {}
@@ -33,7 +33,16 @@ class Ray2D_T {
      */
     Ray2D_T<T>& operator=(Ray2D_T<T>&& r) = default;
 
+    /** Access \c m_origin
+     *
+     *  @returns origin of this ray
+     */
     const Point2D_T<T>& origin() const { return m_origin; }
+
+    /** Access \c m_through
+     *
+     *  @returns point defining the direction of this ray
+     */
     const Point2D_T<T>& through() const { return m_through; }
 
    private:
