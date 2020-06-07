@@ -144,87 +144,98 @@ std::array<real, 4> two_two_diff(real a1, real a0, real b1, real b0) {
 
 class Expansion {
    public:
-    Expansion(const real* data, std::size_t size, bool dynamic)
-        : m_data(data), m_size(size), m_dynamic(dynamic), m_ownsData(dynamic) {}
+    Expansion() = default;
+    virtual ~Expansion() = default;
 
-    explicit Expansion(const std::vector<real>& v)
-        : m_data(v.data()),
-          m_size(v.size()),
-          m_dynamic(true),
-          m_ownsData(false) {}
+    virtual std::size_t size() const = 0;
+    virtual real operator[](std::size_t idx) const = 0;
+    virtual real back() const = 0;
+};
 
-    explicit Expansion(std::vector<real>&& v)
-        : m_data(v.data()),
-          m_size(v.size()),
-          m_dynamic(true),
-          m_ownsData(true) {
-        std::vector<real> tmp;
-        v = tmp;
-        std::cout << "new extension" << std::endl;
+class DynamicExpansion : public Expansion {
+   public:
+    DynamicExpansion() = default;
+    ~DynamicExpansion() override = default;
+
+    explicit DynamicExpansion(size_t maxLength) { m_data.reserve(maxLength); }
+    explicit DynamicExpansion(const std::vector<real>& vector)
+        : m_data(vector) {}
+    explicit DynamicExpansion(std::vector<real>&& vector)
+        : m_data(move(vector)) {}
+
+    std::size_t size() const override { return m_data.size(); }
+
+    std::vector<real>& vector() { return m_data; }
+    const std::vector<real>& vector() const { return m_data; }
+
+    real back() const override { return m_data.back(); }
+
+    real operator[](std::size_t idx) const override {
+        assert(idx < m_data.size());
+        return m_data[idx];
     }
 
-    Expansion(const Expansion& other) = delete;
-    Expansion& operator=(const Expansion& other) = delete;
+   private:
+    std::vector<real> m_data;
+};
 
-    ~Expansion() {
-        if (m_dynamic && m_ownsData) {
-            std::cout << "deleting data" << std::endl;
-            delete[] m_data;
+class StaticExpansion : public Expansion {
+   public:
+    StaticExpansion() = default;
+    ~StaticExpansion() override = default;
+
+    explicit StaticExpansion(const real* data, std::size_t size)
+        : m_data(data), m_size(size) {}
+
+    std::size_t size() const override { return m_size; }
+
+    real back() const override { return m_data[m_size - 1]; }
+
+    real operator[](std::size_t idx) const override {
+        if (idx >= m_size) {
+            std::cout << "trying to access [" << idx << "] while size is only "
+                      << m_size << std::endl;
         }
-    }
-
-    bool isDynamic() const { return m_dynamic; }
-    bool ownsData() const { return m_dynamic && m_ownsData; }
-
-    std::size_t size() const { return m_size; }
-
-    const real* data() const { return m_data; }
-
-    real back() const { return m_data[m_size - 1]; }
-
-    real operator[](std::size_t idx) const {
         assert(idx < m_size);
         return *(m_data + idx);
     }
 
-    friend Expansion operator+(const Expansion&, const Expansion&);
-
    private:
-    const real* m_data;
-    std::size_t m_size;
-    bool m_dynamic;   // true, if m_data is a dynamically allocated array
-    bool m_ownsData;  // true, if we own the dynamic data in m_data
+    const real* m_data = nullptr;
+    const std::size_t m_size = 0;
 };
 
 // implements fast_expansion_sum_zeroelim
-Expansion operator+(const Expansion& e, const Expansion& f) {
+DynamicExpansion operator+(const Expansion& e, const Expansion& f) {
+    // std::cout << "fast_expansion_sum_zeroelim(" << e.size() << ", " <<
+    // f.size()
+    //           << ")" << std::endl;
     const std::size_t esize = e.size();
     const std::size_t fsize = f.size();
-    std::vector<real> h;
-    h.reserve(esize + fsize);
+
+    assert(esize >= 1);
+    assert(fsize >= 1);
+    DynamicExpansion expH(esize + fsize);
+    auto& h = expH.vector();
 
     std::size_t eidx = 0;
     std::size_t fidx = 0;
-    std::size_t hidx = 0;
 
     real enow = e[eidx];
     real fnow = f[fidx];
-    const bool condition = (fnow > enow) == (fnow > -enow);
+    const bool condition = ((fnow > enow) == (fnow > -enow));
     real Q = condition ? enow : fnow;
-    if (condition) {
-        enow = e[++eidx];
-    } else {
-        fnow = f[++fidx];
-    }
 
     if ((eidx < esize) && (fidx < fsize)) {
-        const bool condition = (fnow > enow) == (fnow > -enow);
+        const bool condition = ((fnow > enow) == (fnow > -enow));
         const auto [Qnew, hh] = condition ? detail::fast_two_sum(enow, Q)
                                           : detail::fast_two_sum(fnow, Q);
         if (condition) {
-            enow = e[++eidx];
+            enow = e[eidx];
+            ++eidx;
         } else {
-            fnow = f[++fidx];
+            fnow = f[fidx];
+            ++fidx;
         }
         Q = Qnew;
         if (hh != 0.0) {
@@ -232,13 +243,15 @@ Expansion operator+(const Expansion& e, const Expansion& f) {
         }
 
         while ((eidx < esize) && (fidx < fsize)) {
-            const bool condition = (fnow > enow) == (fnow > -enow);
+            const bool condition = ((fnow > enow) == (fnow > -enow));
             const auto [Qnew, hh] =
                 condition ? detail::two_sum(Q, enow) : detail::two_sum(Q, fnow);
             if (condition) {
-                enow = e[++eidx];
+                enow = e[eidx];
+                ++eidx;
             } else {
-                fnow = f[++fidx];
+                fnow = f[fidx];
+                ++fidx;
             }
             Q = Qnew;
             if (hh != 0.0) {
@@ -249,7 +262,8 @@ Expansion operator+(const Expansion& e, const Expansion& f) {
 
     while (eidx < esize) {
         const auto [Qnew, hh] = detail::two_sum(Q, enow);
-        enow = e[++eidx];
+        enow = e[eidx];
+        ++eidx;
         Q = Qnew;
         if (hh != 0.0) {
             h.emplace_back(hh);
@@ -257,7 +271,8 @@ Expansion operator+(const Expansion& e, const Expansion& f) {
     }
     while (fidx < fsize) {
         const auto [Qnew, hh] = detail::two_sum(Q, fnow);
-        fnow = f[++fidx];
+        fnow = f[fidx];
+        ++fidx;
         Q = Qnew;
         if (hh != 0.0) {
             h.emplace_back(hh);
@@ -267,7 +282,7 @@ Expansion operator+(const Expansion& e, const Expansion& f) {
         h.emplace_back(Q);
     }
 
-    return Expansion(std::move(h));
+    return expH;
 }
 
 }  // namespace detail
@@ -320,8 +335,6 @@ real CPPredicates::orientationApprox(const Point2D& point, const Ray2D& ray) {
 
 real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
                                     real detsum) {
-    std::cout << "okay, let's get started" << std::endl;
-
     const Point2D ac = point - ray.through();
     const Point2D bc = ray.origin() - ray.through();
 
@@ -331,13 +344,11 @@ real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
     const std::array<real, 4> B =
         detail::two_two_diff(left, lefttail, right, righttail);
 
-    real det = std::reduce(B.begin(), B.end());
+    real det = std::reduce(B.cbegin(), B.cend());
     const real errbound = m_ccwerrboundB * detsum;
     if ((det >= errbound) || (-det >= errbound)) {
         return det;
     }
-
-    std::cout << "I made it here :)" << std::endl;
 
     const real acxtail =
         detail::two_diff_tail(point.x(), ray.through().x(), ac.x());
@@ -354,8 +365,6 @@ real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
         return det;
     }
 
-    std::cout << "I made it almost to the end :)" << std::endl;
-
     const real errbound2 =
         m_ccwerrboundC * detsum + m_resulterrbound * std::abs(det);
     det += (ac.x() * bcytail + bc.y() * acxtail) -
@@ -364,30 +373,24 @@ real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
         return det;
     }
 
-    std::cout << "I made it all the way to the end :)" << std::endl;
-
     const auto [s, stail] = detail::two_product(acxtail, bc.y());
     const auto [t, ttail] = detail::two_product(acytail, bc.x());
+    const auto u = detail::two_two_diff(s, stail, t, ttail);
+    const detail::StaticExpansion Be(B.data(), B.size());
+    const detail::StaticExpansion Ue(u.data(), u.size());
+    const auto C1 = Be + Ue;
 
     const auto [s2, s2tail] = detail::two_product(ac.x(), bcytail);
     const auto [t2, t2tail] = detail::two_product(ac.y(), bcxtail);
+    const auto u2 = detail::two_two_diff(s2, s2tail, t2, t2tail);
+    const detail::StaticExpansion U2e(u2.data(), u2.size());
+    const auto C2 = C1 + U2e;
 
     const auto [s3, s3tail] = detail::two_product(acxtail, bcytail);
     const auto [t3, t3tail] = detail::two_product(acytail, bcxtail);
-
-    const auto u = detail::two_two_diff(s, stail, t, ttail);
-    const auto u2 = detail::two_two_diff(s2, s2tail, t2, t2tail);
     const auto u3 = detail::two_two_diff(s3, s3tail, t3, t3tail);
+    const detail::StaticExpansion U3e(u3.data(), u3.size());
+    const auto D = C2 + U3e;
 
-    const detail::Expansion Be(B.data(), B.size(), false);
-    const detail::Expansion Ue(u.data(), u.size(), false);
-    const auto c1 = Be + Ue;
-
-    const detail::Expansion U2e(u2.data(), u2.size(), false);
-    const auto c2 = c1 + U2e;
-
-    const detail::Expansion U3e(u3.data(), u3.size(), false);
-    const auto d = c2 + U3e;
-
-    return d.back();
+    return D.back();
 }

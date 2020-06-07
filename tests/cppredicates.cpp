@@ -22,15 +22,27 @@ TEST_CASE("CPPredicates simple tests", "[cppredicates]") {
     real ore = predicates.orientation(pa, bd);
     real oco = predicates.orientation(pa, be);
 
-    Ray2D r(Point2D{16.84, 16.84}, Point2D{16.92, 16.92});
-    real oleh = predicates.orientation(Point2D{0.98, 0.98000000000000001}, r);
-    real oreh = predicates.orientation(Point2D{0.98, 0.97999999999999999}, r);
-
     CHECK(ole > 0);
     CHECK(ore < 0);
     CHECK(oco == 0.0);
-    CHECK(oleh > 0);
-    CHECK(oreh < 0);
+
+    Ray2D r(Point2D{16.8, 16.8}, Point2D{18.0, 18.0});
+    const real eps = std::pow(2, -40);
+    for (int i = 0; i < 32; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            const real o = predicates.orientation(
+                Point2D(0.95 + i * eps, 0.95 + j * eps), r);
+            if (i == j) {
+                REQUIRE(o == 0.0);
+            } else {
+                if (i > j) {
+                    REQUIRE(o < 0);
+                } else {
+                    REQUIRE(o > 0);
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("CPPredicates benchmark orientation left", "[cppredicates]") {
@@ -40,10 +52,6 @@ TEST_CASE("CPPredicates benchmark orientation left", "[cppredicates]") {
     Point2D pb{2, 0};
     Point2D pc{1, 1};
     Ray2D bc(pb, pc);
-
-    std::array<double, 2> a = {0, 0};
-    std::array<double, 2> b = {2, 0};
-    std::array<double, 2> c = {1, 1};
 
     BENCHMARK("orientation left") { return predicates.orientation(pa, bc); };
     BENCHMARK("orientation left (approx)") {
@@ -107,5 +115,23 @@ TEST_CASE("CPPredicates benchmark orientation right (harder)",
 
     BENCHMARK("orientation right (harder)") {
         return predicates.orientation(pa, bg);
+    };
+}
+
+TEST_CASE("CPPredicates benchmark whole square", "[cppredicates]") {
+    CPPredicates predicates;
+
+    Ray2D r(Point2D{16.8, 16.8}, Point2D{18.0, 18.0});
+    const real eps = std::pow(2, -40);
+
+    BENCHMARK("orientation whole square") {
+        real sum = 0;
+        for (int i = 0; i < 32; ++i) {
+            for (int j = 0; j < 32; ++j) {
+                sum += predicates.orientation(
+                    Point2D(0.95 + i * eps, 0.95 + j * eps), r);
+            }
+        }
+        return sum;
     };
 }

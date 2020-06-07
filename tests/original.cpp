@@ -21,6 +21,25 @@ TEST_CASE("Original benchmarks", "[predicates]") {
     CHECK(left > 0);
     CHECK(right < 0);
     CHECK(middle == 0);
+
+    Point a = {16.8, 16.8};
+    Point b = {18.0, 18.0};
+    const double eps = std::pow(2, -40);
+    for (int i = 0; i < 32; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            Point p = {0.95 + i * eps, 0.95 + j * eps};
+            const double o = orient2d(p.data(), a.data(), b.data());
+            if (i == j) {
+                REQUIRE(o == 0.0);
+            } else {
+                if (i > j) {
+                    REQUIRE(o < 0);
+                } else {
+                    REQUIRE(o > 0);
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("Original benchmark orient2d left", "[predicates]") {
@@ -92,5 +111,24 @@ TEST_CASE("Original benchmark orient2d right (harder)", "[predicates]") {
 
     BENCHMARK("orient2d right (harder)") {
         return orient2d(pa.data(), pb.data(), pg.data());
+    };
+}
+
+TEST_CASE("Original benchmark whole square", "[predicates]") {
+    exactinit();
+
+    Point a = {16.8, 16.8};
+    Point b = {18.0, 18.0};
+    const double eps = std::pow(2, -40);
+
+    BENCHMARK("orientation whole square") {
+        double sum = 0;
+        for (int i = 0; i < 32; ++i) {
+            for (int j = 0; j < 32; ++j) {
+                Point p = {0.95 + i * eps, 0.95 + j * eps};
+                sum += orient2d(p.data(), a.data(), b.data());
+            }
+        }
+        return sum;
     };
 }
