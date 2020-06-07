@@ -144,54 +144,28 @@ std::array<real, 4> two_two_diff(real a1, real a0, real b1, real b0) {
 
 class Expansion {
    public:
-    Expansion() = default;
-    virtual ~Expansion() = default;
-
-    virtual std::size_t size() const = 0;
-    virtual real operator[](std::size_t idx) const = 0;
-    virtual real back() const = 0;
-};
-
-class DynamicExpansion : public Expansion {
-   public:
-    DynamicExpansion() = default;
-    ~DynamicExpansion() override = default;
-
-    explicit DynamicExpansion(size_t maxLength) { m_data.reserve(maxLength); }
-    explicit DynamicExpansion(const std::vector<real>& vector)
-        : m_data(vector) {}
-    explicit DynamicExpansion(std::vector<real>&& vector)
-        : m_data(move(vector)) {}
-
-    std::size_t size() const override { return m_data.size(); }
-
-    std::vector<real>& vector() { return m_data; }
-    const std::vector<real>& vector() const { return m_data; }
-
-    real back() const override { return m_data.back(); }
-
-    real operator[](std::size_t idx) const override {
-        assert(idx < m_data.size());
-        return m_data[idx];
+    explicit Expansion(std::size_t maxSize) {
+        m_vector.reserve(maxSize);
+        m_data = m_vector.data();
+        m_size = 0;
     }
 
-   private:
-    std::vector<real> m_data;
-};
+    explicit Expansion(std::vector<real>&& v)
+        : m_data(v.data()), m_size(v.size()), m_vector(std::move(v)) {}
 
-class StaticExpansion : public Expansion {
-   public:
-    StaticExpansion() = default;
-    ~StaticExpansion() override = default;
+    explicit Expansion(const real* data, std::size_t size)
+        : m_data(data), m_size(size), m_vector() {}
 
-    explicit StaticExpansion(const real* data, std::size_t size)
-        : m_data(data), m_size(size) {}
+    explicit Expansion(const std::array<real, 4>& a)
+        : m_data(a.data()), m_size(a.size()), m_vector() {}
 
-    std::size_t size() const override { return m_size; }
+    Expansion(Expansion&& other) = default;
+    Expansion& operator=(Expansion&& other) = default;
 
-    real back() const override { return m_data[m_size - 1]; }
+    std::size_t size() const { return m_size; }
+    real back() const { return m_data[m_size - 1]; }
 
-    real operator[](std::size_t idx) const override {
+    real operator[](std::size_t idx) const {
         if (idx >= m_size) {
             std::cout << "trying to access [" << idx << "] while size is only "
                       << m_size << std::endl;
@@ -200,23 +174,30 @@ class StaticExpansion : public Expansion {
         return *(m_data + idx);
     }
 
+    std::vector<real>& vector() { return m_vector; }
+    const std::vector<real>& vector() const { return m_vector; }
+
+    void updateCacheFromVector() {
+        m_data = m_vector.data();
+        m_size = m_vector.size();
+    }
+
    private:
-    const real* m_data = nullptr;
-    const std::size_t m_size = 0;
+    const real* m_data;
+    std::size_t m_size;
+
+    std::vector<real> m_vector;
 };
 
 // implements fast_expansion_sum_zeroelim
-DynamicExpansion operator+(const Expansion& e, const Expansion& f) {
-    // std::cout << "fast_expansion_sum_zeroelim(" << e.size() << ", " <<
-    // f.size()
-    //           << ")" << std::endl;
+Expansion operator+(const Expansion& e, const Expansion& f) {
     const std::size_t esize = e.size();
     const std::size_t fsize = f.size();
 
     assert(esize >= 1);
     assert(fsize >= 1);
-    DynamicExpansion expH(esize + fsize);
-    auto& h = expH.vector();
+    std::vector<real> h;
+    h.reserve(esize + fsize);
 
     std::size_t eidx = 0;
     std::size_t fidx = 0;
@@ -282,7 +263,7 @@ DynamicExpansion operator+(const Expansion& e, const Expansion& f) {
         h.emplace_back(Q);
     }
 
-    return expH;
+    return Expansion(std::move(h));
 }
 
 }  // namespace detail
@@ -301,23 +282,23 @@ real CPPredicates::orientation(const Point2D& point, const Ray2D& ray) {
 
     if (detleft > zero) {
         if (detright <= zero) {
-            return det;  // return detToLeftRightColinear(det);
+            return det;
         } else {
             detsum = detleft + detright;
         }
     } else if (detleft < zero) {
         if (detright >= 0) {
-            return det;  // return detToLeftRightColinear(det);
+            return det;
         } else {
             detsum = -detleft - detright;
         }
     } else {
-        return det;  // return detToLeftRightColinear(det);
+        return det;
     }
 
     const real errbound = m_ccwerrboundA * detsum;
     if (det >= errbound || -det >= errbound) {
-        return det;  // return detToLeftRightColinear(det);
+        return det;
     }
 
     return adaptiveOrient2D(point, ray, detsum);
@@ -375,22 +356,18 @@ real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
 
     const auto [s, stail] = detail::two_product(acxtail, bc.y());
     const auto [t, ttail] = detail::two_product(acytail, bc.x());
-    const auto u = detail::two_two_diff(s, stail, t, ttail);
-    const detail::StaticExpansion Be(B.data(), B.size());
-    const detail::StaticExpansion Ue(u.data(), u.size());
-    const auto C1 = Be + Ue;
+    const auto C1 = detail::Expansion(B) +
+                    detail::Expansion(detail::two_two_diff(s, stail, t, ttail));
 
     const auto [s2, s2tail] = detail::two_product(ac.x(), bcytail);
     const auto [t2, t2tail] = detail::two_product(ac.y(), bcxtail);
-    const auto u2 = detail::two_two_diff(s2, s2tail, t2, t2tail);
-    const detail::StaticExpansion U2e(u2.data(), u2.size());
-    const auto C2 = C1 + U2e;
+    const auto C2 =
+        C1 + detail::Expansion(detail::two_two_diff(s2, s2tail, t2, t2tail));
 
     const auto [s3, s3tail] = detail::two_product(acxtail, bcytail);
     const auto [t3, t3tail] = detail::two_product(acytail, bcxtail);
-    const auto u3 = detail::two_two_diff(s3, s3tail, t3, t3tail);
-    const detail::StaticExpansion U3e(u3.data(), u3.size());
-    const auto D = C2 + U3e;
+    const auto D =
+        C2 + detail::Expansion(detail::two_two_diff(s3, s3tail, t3, t3tail));
 
     return D.back();
 }

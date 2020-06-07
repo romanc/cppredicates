@@ -10,7 +10,7 @@ This project is currently work in progress.
 - [x] Setup original predicates, add initial benchmarks
 - [x] Add doxygen and clang-format
 - [x] Setup (dummy) support classes and `enums` for readability and type checking
-- [ ] port `orient2d()` from `predicates` to `cppredicates`
+- [x] port `orient2d()` from `predicates` to `cppredicates`
 - [ ] port `orient3d()` from `predicates` to `cppredicates`
 - [ ] port in-circle test (2D) from `predicates` to `cppredicates`
 - [ ] port in-sphere test from `predicates`  to `cppredicates`
@@ -21,7 +21,7 @@ This project ports [Adaptive Precision Floating-Point Arithmetic and Fast Robust
 
 ## Acknowledgements
 
-This project is just a port. All the hard work was done by [Jonathan Richard Shewchuk](http://www.cs.berkeley.edu/~jrs).
+This project is a port. The hard work was done by [Jonathan Richard Shewchuk](http://www.cs.berkeley.edu/~jrs).
 
 This project uses [Catch2](https://github.com/catchorg/Catch2) for testing and benchmarking.
 
