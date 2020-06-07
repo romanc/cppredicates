@@ -14,9 +14,6 @@ TEST_CASE("Original benchmarks", "[predicates]") {
     Point pd = {1, -1};
     Point pe = {1, 0};
 
-    Point pf = {10, -0.0000000001};
-    Point pg = {10, 0.000000001};
-
     double left = orient2d(pa.data(), pb.data(), pc.data());
     double right = orient2d(pa.data(), pb.data(), pd.data());
     double middle = orient2d(pa.data(), pb.data(), pe.data());
@@ -74,12 +71,26 @@ TEST_CASE("Original benchmark orient2d colinear", "[predicates]") {
     };
 }
 
-/*
-BENCHMARK("orient2d left (harder)") {
-    return orient2d(pa.data(), pb.data(), pf.data());
-};
+TEST_CASE("Original benchmark orient2d left (harder)", "[predicates]") {
+    exactinit();
 
-BENCHMARK("orient2d right (harder)") {
-    return orient2d(pa.data(), pb.data(), pg.data());
-};
-*/
+    Point pa{3.84, 3.84};
+    Point pb{3.92, 3.92};
+    Point pf{0.98, 0.980000000000001};
+
+    BENCHMARK("orient2d left (harder)") {
+        return orient2d(pa.data(), pb.data(), pf.data());
+    };
+}
+
+TEST_CASE("Original benchmark orient2d right (harder)", "[predicates]") {
+    exactinit();
+
+    Point pa{3.84, 3.84};
+    Point pb{3.92, 3.92};
+    Point pg{0.98, 0.979999999999999};
+
+    BENCHMARK("orient2d right (harder)") {
+        return orient2d(pa.data(), pb.data(), pg.data());
+    };
+}

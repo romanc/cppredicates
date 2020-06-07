@@ -2,6 +2,7 @@
 #define CPPREDICATES_RAY_2D_T_H
 
 #include <cppredicates/Point2D_T.hpp>
+
 #include <utility>
 
 namespace cppredicates

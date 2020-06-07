@@ -7,6 +7,7 @@
 #include <cppredicates/Point3D.hpp>
 #include <cppredicates/Ray2D.hpp>
 #include <cppredicates/Sphere.hpp>
+
 #include <cstdint>
 
 //! Project namespace

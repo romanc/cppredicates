@@ -1,11 +1,12 @@
-
 #include <cppredicates/Point2D.hpp>
 #include <cppredicates/Ray2D.hpp>
 #include <cppredicates/cppredicates.hpp>
 
-//#include "detail.hpp"
-
+#include <cassert>
+#include <cstdlib>
+#include <iostream>
 #include <numeric>
+#include <vector>
 
 using namespace cppredicates;
 
@@ -84,14 +85,28 @@ std::pair<real, real> split(real a) {
     return {high, low};
 }
 
-std::pair<real, real> two_diff(real a, real b) {
-    const real diff = a - b;
+real fast_two_sum_tail(real a, real b, real x) {
+    const real bvirt = x - a;
+    return b - bvirt;
+}
 
+std::pair<real, real> fast_two_sum(real a, real b) {
+    const real sum = a + b;
+    return {sum, fast_two_sum_tail(a, b, sum)};
+}
+
+real two_diff_tail(real a, real b, real diff) {
     const real bvirt = a - diff;
     const real avirt = diff + bvirt;
     const real bround = bvirt - b;
     const real around = a - avirt;
-    return {diff, around + bround};
+    return around + bround;
+}
+
+std::pair<real, real> two_diff(real a, real b) {
+    const real diff = a - b;
+
+    return {diff, two_diff_tail(a, b, diff)};
 }
 
 std::pair<real, real> two_sum(real a, real b) {
@@ -125,6 +140,134 @@ std::array<real, 4> two_two_diff(real a1, real a0, real b1, real b0) {
     const auto [j, k, x0] = two_one_diff(a1, a0, b0);
     const auto [x3, x2, x1] = two_one_diff(j, k, b1);
     return {x3, x2, x1, x0};
+}
+
+class Expansion {
+   public:
+    Expansion(const real* data, std::size_t size, bool dynamic)
+        : m_data(data), m_size(size), m_dynamic(dynamic), m_ownsData(dynamic) {}
+
+    explicit Expansion(const std::vector<real>& v)
+        : m_data(v.data()),
+          m_size(v.size()),
+          m_dynamic(true),
+          m_ownsData(false) {}
+
+    explicit Expansion(std::vector<real>&& v)
+        : m_data(v.data()),
+          m_size(v.size()),
+          m_dynamic(true),
+          m_ownsData(true) {
+        std::vector<real> tmp;
+        v = tmp;
+        std::cout << "new extension" << std::endl;
+    }
+
+    Expansion(const Expansion& other) = delete;
+    Expansion& operator=(const Expansion& other) = delete;
+
+    ~Expansion() {
+        if (m_dynamic && m_ownsData) {
+            std::cout << "deleting data" << std::endl;
+            delete[] m_data;
+        }
+    }
+
+    bool isDynamic() const { return m_dynamic; }
+    bool ownsData() const { return m_dynamic && m_ownsData; }
+
+    std::size_t size() const { return m_size; }
+
+    const real* data() const { return m_data; }
+
+    real back() const { return m_data[m_size - 1]; }
+
+    real operator[](std::size_t idx) const {
+        assert(idx < m_size);
+        return *(m_data + idx);
+    }
+
+    friend Expansion operator+(const Expansion&, const Expansion&);
+
+   private:
+    const real* m_data;
+    std::size_t m_size;
+    bool m_dynamic;   // true, if m_data is a dynamically allocated array
+    bool m_ownsData;  // true, if we own the dynamic data in m_data
+};
+
+// implements fast_expansion_sum_zeroelim
+Expansion operator+(const Expansion& e, const Expansion& f) {
+    const std::size_t esize = e.size();
+    const std::size_t fsize = f.size();
+    std::vector<real> h;
+    h.reserve(esize + fsize);
+
+    std::size_t eidx = 0;
+    std::size_t fidx = 0;
+    std::size_t hidx = 0;
+
+    real enow = e[eidx];
+    real fnow = f[fidx];
+    const bool condition = (fnow > enow) == (fnow > -enow);
+    real Q = condition ? enow : fnow;
+    if (condition) {
+        enow = e[++eidx];
+    } else {
+        fnow = f[++fidx];
+    }
+
+    if ((eidx < esize) && (fidx < fsize)) {
+        const bool condition = (fnow > enow) == (fnow > -enow);
+        const auto [Qnew, hh] = condition ? detail::fast_two_sum(enow, Q)
+                                          : detail::fast_two_sum(fnow, Q);
+        if (condition) {
+            enow = e[++eidx];
+        } else {
+            fnow = f[++fidx];
+        }
+        Q = Qnew;
+        if (hh != 0.0) {
+            h.emplace_back(hh);
+        }
+
+        while ((eidx < esize) && (fidx < fsize)) {
+            const bool condition = (fnow > enow) == (fnow > -enow);
+            const auto [Qnew, hh] =
+                condition ? detail::two_sum(Q, enow) : detail::two_sum(Q, fnow);
+            if (condition) {
+                enow = e[++eidx];
+            } else {
+                fnow = f[++fidx];
+            }
+            Q = Qnew;
+            if (hh != 0.0) {
+                h.emplace_back(hh);
+            }
+        }
+    }
+
+    while (eidx < esize) {
+        const auto [Qnew, hh] = detail::two_sum(Q, enow);
+        enow = e[++eidx];
+        Q = Qnew;
+        if (hh != 0.0) {
+            h.emplace_back(hh);
+        }
+    }
+    while (fidx < fsize) {
+        const auto [Qnew, hh] = detail::two_sum(Q, fnow);
+        fnow = f[++fidx];
+        Q = Qnew;
+        if (hh != 0.0) {
+            h.emplace_back(hh);
+        }
+    }
+    if ((Q != 0.0) || (h.size() == 0)) {
+        h.emplace_back(Q);
+    }
+
+    return Expansion(std::move(h));
 }
 
 }  // namespace detail
@@ -177,6 +320,8 @@ real CPPredicates::orientationApprox(const Point2D& point, const Ray2D& ray) {
 
 real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
                                     real detsum) {
+    std::cout << "okay, let's get started" << std::endl;
+
     const Point2D ac = point - ray.through();
     const Point2D bc = ray.origin() - ray.through();
 
@@ -186,13 +331,63 @@ real CPPredicates::adaptiveOrient2D(const Point2D& point, const Ray2D& ray,
     const std::array<real, 4> B =
         detail::two_two_diff(left, lefttail, right, righttail);
 
-    const real det = std::reduce(B.begin(), B.end());
+    real det = std::reduce(B.begin(), B.end());
     const real errbound = m_ccwerrboundB * detsum;
     if ((det >= errbound) || (-det >= errbound)) {
         return det;
     }
 
-    return 42;
+    std::cout << "I made it here :)" << std::endl;
 
-    // TODO ... continue
+    const real acxtail =
+        detail::two_diff_tail(point.x(), ray.through().x(), ac.x());
+    const real acytail =
+        detail::two_diff_tail(point.y(), ray.through().y(), ac.y());
+
+    const real bcxtail =
+        detail::two_diff_tail(ray.origin().x(), ray.through().x(), bc.x());
+    const real bcytail =
+        detail::two_diff_tail(ray.origin().y(), ray.through().y(), bc.y());
+
+    if ((acxtail == 0.0) && (acytail == 0.0) && (bcxtail == 0.0) &&
+        (bcytail == 0.0)) {
+        return det;
+    }
+
+    std::cout << "I made it almost to the end :)" << std::endl;
+
+    const real errbound2 =
+        m_ccwerrboundC * detsum + m_resulterrbound * std::abs(det);
+    det += (ac.x() * bcytail + bc.y() * acxtail) -
+           (ac.y() * bcxtail + bc.x() * acytail);
+    if ((det >= errbound2) || (-det >= errbound2)) {
+        return det;
+    }
+
+    std::cout << "I made it all the way to the end :)" << std::endl;
+
+    const auto [s, stail] = detail::two_product(acxtail, bc.y());
+    const auto [t, ttail] = detail::two_product(acytail, bc.x());
+
+    const auto [s2, s2tail] = detail::two_product(ac.x(), bcytail);
+    const auto [t2, t2tail] = detail::two_product(ac.y(), bcxtail);
+
+    const auto [s3, s3tail] = detail::two_product(acxtail, bcytail);
+    const auto [t3, t3tail] = detail::two_product(acytail, bcxtail);
+
+    const auto u = detail::two_two_diff(s, stail, t, ttail);
+    const auto u2 = detail::two_two_diff(s2, s2tail, t2, t2tail);
+    const auto u3 = detail::two_two_diff(s3, s3tail, t3, t3tail);
+
+    const detail::Expansion Be(B.data(), B.size(), false);
+    const detail::Expansion Ue(u.data(), u.size(), false);
+    const auto c1 = Be + Ue;
+
+    const detail::Expansion U2e(u2.data(), u2.size(), false);
+    const auto c2 = c1 + U2e;
+
+    const detail::Expansion U3e(u3.data(), u3.size(), false);
+    const auto d = c2 + U3e;
+
+    return d.back();
 }

@@ -22,9 +22,15 @@ TEST_CASE("CPPredicates simple tests", "[cppredicates]") {
     real ore = predicates.orientation(pa, bd);
     real oco = predicates.orientation(pa, be);
 
+    Ray2D r(Point2D{16.84, 16.84}, Point2D{16.92, 16.92});
+    real oleh = predicates.orientation(Point2D{0.98, 0.98000000000000001}, r);
+    real oreh = predicates.orientation(Point2D{0.98, 0.97999999999999999}, r);
+
     CHECK(ole > 0);
     CHECK(ore < 0);
     CHECK(oco == 0.0);
+    CHECK(oleh > 0);
+    CHECK(oreh < 0);
 }
 
 TEST_CASE("CPPredicates benchmark orientation left", "[cppredicates]") {
@@ -73,5 +79,33 @@ TEST_CASE("CPPredicates benchmark orientation colinear", "[cppredicates]") {
 
     BENCHMARK("orientation colinear (approx)") {
         return predicates.orientationApprox(pa, be);
+    };
+}
+
+TEST_CASE("CPPredicates benchmark orientation left (harder)",
+          "[cppredicates]") {
+    CPPredicates predicates;
+
+    Point2D pa{3.84, 3.84};
+    Point2D pb{3.92, 3.92};
+    Point2D pf{0.98, 0.980000000000001};
+    Ray2D bf(pb, pf);
+
+    BENCHMARK("orientation left (harder)") {
+        return predicates.orientation(pa, bf);
+    };
+}
+
+TEST_CASE("CPPredicates benchmark orientation right (harder)",
+          "[cppredicates]") {
+    CPPredicates predicates;
+
+    Point2D pa{3.84, 3.84};
+    Point2D pb{3.92, 3.92};
+    Point2D pg{0.98, 0.979999999999999};
+    Ray2D bg(pb, pg);
+
+    BENCHMARK("orientation right (harder)") {
+        return predicates.orientation(pa, bg);
     };
 }

@@ -1,6 +1,15 @@
 # Use defaults from the Google style
 BasedOnStyle: Google
 IndentWidth: 4
+Standard: c++17
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterNamespace: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^<.*\.h(pp)?>'
+    Priority:        1
+  - Regex:           '^<.*'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
